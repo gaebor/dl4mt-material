@@ -21,21 +21,20 @@ def main(job_id, params):
         dispFreq=10,
         saveFreq=1000,
         sampleFreq=1000,
-        dataset='/ichec/work/dl4mt_data/nec_files/wiki.tok.txt.gz',
-        valid_dataset='/ichec/work/dl4mt_data/nec_files/newstest2011.en.tok',
-        dictionary='/ichec/work/dl4mt_data/nec_files/wiki.tok.txt.gz.pkl',
+        dataset='staff.data.train.tok',
+        valid_dataset='staff.data.valid.tok',
+        dictionary='staff.data.train.pkl',
         use_dropout=params['use-dropout'][0])
     return validerr
 
 if __name__ == '__main__':
     main(0, {
-        'model': ['/ichec/home/users/%s/models/model_session0.npz' %
-                  os.environ['USER']],
-        'dim_word': [512],
+        'model': ['staff.model'],
+        'dim_word': [50],
         'dim': [1024],
-        'n-words': [30000],
+        'n-words': [20],
         'optimizer': ['adadelta'],
         'decay-c': [0.],
         'use-dropout': [False],
-        'learning-rate': [0.0001],
+        'learning-rate': [0.001],
         'reload': [False]})

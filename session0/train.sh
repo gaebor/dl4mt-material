@@ -7,7 +7,7 @@
 
 export THEANO_FLAGS=device=gpu,floatX=float32
 
-cd $PBS_O_WORKDIR
+# cd $PBS_O_WORKDIR
 python ./train_lm.py
 
 

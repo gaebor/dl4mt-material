@@ -427,40 +427,41 @@ def build_sampler(tparams, options, trng):
     next_sample = trng.multinomial(pvals=next_probs).argmax(1)
 
     # next word probability
-    print 'Building f_next..',
+    print >>sys.stderr, 'Building f_next..',
     inps = [y, init_state]
     outs = [next_probs, next_sample, next_state]
     f_next = theano.function(inps, outs, name='f_next', profile=profile)
-    print 'Done'
+    print >>sys.stderr, 'Done'
 
     return f_next
 
 
 # generate sample
-def gen_sample(tparams, f_next, options, trng=None, maxlen=30, argmax=False):
-
-    sample = []
+def gen_sample(f_next, options, sample=[], maxlen=30):
+    result = list(sample)
     sample_score = 0
 
     # initial token is indicated by a -1 and initial state is zero
     next_w = -1 * numpy.ones((1,)).astype('int64')
     next_state = numpy.zeros((1, options['dim'])).astype('float32')
+    inps = [next_w, next_state]
 
-    for ii in xrange(maxlen):
-        inps = [next_w, next_state]
+    for ii in range(len(sample)):
+        ret = f_next(*inps)
+        next_p, next_w, next_state = ret[0], ret[1], ret[2]
+        inps = [sample[ii] * numpy.ones((1,)).astype('int64'), next_state]
+
+    for ii in range(len(sample), maxlen):
         ret = f_next(*inps)
         next_p, next_w, next_state = ret[0], ret[1], ret[2]
 
-        if argmax:
-            nw = next_p[0].argmax()
-        else:
-            nw = next_w[0]
-        sample.append(nw)
-        sample_score += next_p[0, nw]
-        if nw == 0:
+        next_w = numpy.random.multinomial(1, next_p[0], size=1).argmax()
+        if next_w == 0:
             break
+        result.append(next_w)
+        inps = [next_w * numpy.ones((1,)).astype('int64'), next_state]
 
-    return sample, sample_score
+    return result
 
 
 # calculate the log probablities on a given corpus using language model
@@ -793,9 +794,7 @@ def train(dim_word=100,  # word vector dimensionality
             if numpy.mod(uidx, sampleFreq) == 0:
                 # FIXME: random selection?
                 for jj in xrange(5):
-                    sample, score = gen_sample(tparams, f_next,
-                                               model_options, trng=trng,
-                                               maxlen=30, argmax=False)
+                    sample = gen_sample(f_next, model_options)
                     print 'Sample ', jj, ': ',
                     ss = sample
                     for vv in ss:
